@@ -25,7 +25,14 @@
     .body{padding:15px}.price{font-size:18px;font-weight:900;color:#16835b}.title{font-weight:850;font-size:16px;margin:5px 0 8px}.meta{color:#6b7280;font-size:12px;margin:4px 0}
     .nav{position:fixed;bottom:0;left:0;right:0;height:76px;background:#fff;border-top:1px solid #e6ece9;display:flex;justify-content:center;gap:24px;padding:10px 8px env(safe-area-inset-bottom)}.nav button{border:0;background:none;color:#8b9691;font-weight:700;font-size:10px}.nav .active{color:#16835b}.nav span{display:block;font-size:21px;margin-bottom:2px}
     .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#17201d;color:#fff;padding:11px 15px;border-radius:12px;display:none;font-size:13px}
-  </style>
+  
+.modal{display:none;position:fixed;inset:0;background:#f8faf9;z-index:20;overflow:auto}.modal.open{display:block}.formwrap{max-width:760px;margin:auto;padding:18px 18px 105px}
+.formtop{display:flex;align-items:center;gap:12px;margin-bottom:18px}.close{border:0;background:#fff;border:1px solid #e6ece9;border-radius:12px;width:42px;height:42px;font-size:22px}
+.formtitle{font-size:22px;font-weight:900}.label{display:block;font-size:13px;font-weight:800;margin:16px 0 7px;color:#37413d}.input,.textarea{width:100%;padding:14px;border:1px solid #dfe8e3;border-radius:13px;background:#fff;font:inherit;outline:none}.textarea{min-height:105px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.typegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.typebtn{padding:13px;border:1px solid #dfe8e3;border-radius:13px;background:#fff;font-weight:800}.typebtn.selected{border-color:#16835b;background:#eaf7f0;color:#16835b}
+.publish{width:100%;border:0;background:#16835b;color:#fff;border-radius:14px;padding:16px;font-weight:900;font-size:16px;margin-top:22px}.photohelp{background:#eaf7f0;color:#356b54;padding:12px;border-radius:12px;font-size:12px;margin-top:8px}
+.success{display:none;text-align:center;padding:45px 20px}.success.open{display:block}.success .check{font-size:55px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -48,10 +55,37 @@
   <div class="section"><h2>Recently Added</h2></div>
 </div>
 
+
+<div id="postModal" class="modal">
+ <div class="formwrap">
+  <div class="formtop"><button class="close" onclick="closePost()">‹</button><div class="formtitle">Post a Property</div></div>
+  <div id="formcontent">
+   <label class="label">Property type</label>
+   <div class="typegrid">
+    <button class="typebtn selected" onclick="selectType(this,'House')">🏠 House</button>
+    <button class="typebtn" onclick="selectType(this,'Apartment')">🏢 Apartment</button>
+    <button class="typebtn" onclick="selectType(this,'Land')">🌳 Land</button>
+    <button class="typebtn" onclick="selectType(this,'Commercial')">🏬 Commercial</button>
+   </div>
+   <label class="label">Listing type</label>
+   <div class="seg"><button id="sale" class="on" onclick="listingMode('sale')">SALE</button><button id="rental" onclick="listingMode('rental')">RENT</button></div>
+   <label class="label">Price (NPR)</label><input id="fprice" class="input" inputmode="decimal" placeholder="e.g. 25000000">
+   <label class="label">Location</label><input id="flocation" class="input" placeholder="e.g. Budhanilkantha, Kathmandu">
+   <div class="twocol"><div><label class="label">Area</label><input id="farea" class="input" placeholder="e.g. 2,850 sq.ft."></div><div><label class="label">Road access</label><input id="froad" class="input" placeholder="e.g. 20 ft"></div></div>
+   <div class="twocol"><div><label class="label">Bedrooms</label><input id="fbeds" class="input" inputmode="numeric" placeholder="4"></div><div><label class="label">Bathrooms</label><input id="fbaths" class="input" inputmode="numeric" placeholder="3"></div></div>
+   <label class="label">Description</label><textarea id="fdesc" class="textarea" placeholder="Describe the property..."></textarea>
+   <label class="label">Contact number</label><input id="fphone" class="input" type="tel" placeholder="+977 98XXXXXXXX">
+   <label class="label">Property photos</label><input id="fphotos" class="input" type="file" accept="image/*" multiple>
+   <div class="photohelp">Photos can be selected from your iPad. This demo stores listings on this browser only.</div>
+   <button class="publish" onclick="publishProperty()">Publish Property</button>
+  </div>
+  <div id="success" class="success"><div class="check">✅</div><h2>Property published!</h2><p>Your listing has been added to this GharKhoj demo on this device.</p><button class="publish" onclick="closePost()">View listings</button></div>
+ </div>
+</div>
 <div class="nav">
   <button class="active" onclick="window.scrollTo({top:0,behavior:'smooth'})"><span>⌂</span>Home</button>
   <button onclick="document.getElementById('q').focus()"><span>⌕</span>Search</button>
-  <button onclick="toast('Property posting will be available soon')"><span>＋</span>Post</button>
+  <button onclick="openPost()"><span>＋</span>Post</button>
   <button onclick="toast('Saved properties will be available soon')"><span>♡</span>Saved</button>
   <button onclick="toast('Profile will be available soon')"><span>♙</span>Profile</button>
 </div>
@@ -63,6 +97,20 @@ const properties=[
  {type:"Apartment",title:"2 BHK Apartment",location:"Dhumbarahi, Kathmandu",price:"Rs. 55,000 / month",meta:"2 Beds • 2 Baths • 1,250 sq.ft.",img:"https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=80"},
  {type:"Land",title:"Residential Land",location:"Imadol, Lalitpur",price:"Rs. 18,00,000 / aana",meta:"4 aana • Residential • Road access",img:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=80"}
 ];
+
+let selectedType="House", selectedListing="sale";
+try { const saved=JSON.parse(localStorage.getItem("gharkhoj_properties")||"[]"); if(Array.isArray(saved)) properties.push(...saved); } catch(e){}
+function selectType(btn,t){selectedType=t;document.querySelectorAll(".typebtn").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected")}
+function listingMode(x){selectedListing=x;document.getElementById("sale").classList.toggle("on",x==="sale");document.getElementById("rental").classList.toggle("on",x==="rental")}
+function openPost(){document.getElementById("postModal").classList.add("open");document.body.style.overflow="hidden"}
+function closePost(){document.getElementById("postModal").classList.remove("open");document.getElementById("success").classList.remove("open");document.getElementById("formcontent").style.display="block";document.body.style.overflow="";render()}
+function publishProperty(){
+ const price=document.getElementById("fprice").value.trim(), location=document.getElementById("flocation").value.trim();
+ if(!price||!location){alert("Please enter at least the price and location.");return}
+ const p={type:selectedType,title:`${selectedType} in ${location}`,location,price:"Rs. "+Number(price.replace(/,/g,"")).toLocaleString("en-IN")+(selectedListing==="rental"?" / month":""),meta:`${document.getElementById("fbeds").value||0} Beds • ${document.getElementById("fbaths").value||0} Baths • ${document.getElementById("farea").value||"Area not specified"}`,img:"https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=80"};
+ properties.unshift(p); try{localStorage.setItem("gharkhoj_properties",JSON.stringify(properties.slice(3)))}catch(e){}
+ document.getElementById("formcontent").style.display="none";document.getElementById("success").classList.add("open");
+}
 function render(items=properties){document.getElementById("list").innerHTML=items.map((p,i)=>`<div class="card" onclick="details(${i})"><div class="photo" style="background-image:url('${p.img}')"><span class="badge">${p.type}</span><span class="heart">♡</span></div><div class="body"><div class="price">${p.price}</div><div class="title">${p.title}</div><div class="meta">📍 ${p.location}</div><div class="meta">${p.meta}</div></div></div>`).join("")}
 function mode(x){document.getElementById("buy").classList.toggle("on",x==="buy");document.getElementById("rent").classList.toggle("on",x==="rent");toast(x==="buy"?"Showing properties for sale":"Showing rental properties")}
 function filterType(t){render(properties.filter(p=>p.type===t));document.getElementById("list").scrollIntoView({behavior:"smooth"})}
